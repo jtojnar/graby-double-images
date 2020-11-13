@@ -19,14 +19,6 @@
           inherit system;
           overlays = [
             (final: prev: {
-              # html-tidy = prev.html-tidy.overrideAttrs (attrs: {
-              #   src = prev.fetchFromGitHub {
-              #     owner = "htacg";
-              #     repo = "tidy-html5";
-              #     rev = "188988022da4a64d80bc4a2eba21c33d57eb5152";
-              #     sha256 = "GRs5qF7OBv0CX/b8kLnnQsENZDjBRAn0uXJvWfJDQkg=";
-              #   };
-              # });
               libxml2-old = prev.libxml2.overrideAttrs (attrs: rec {
                 pname = "libxml2";
                 version = "2.9.4";
@@ -51,9 +43,13 @@
                 else i) attrs.buildInputs;
               configureFlags = builtins.map (builtins.replaceStrings [ "${pkgs.libxml2.dev}" "${pkgs.libxslt.dev}" ] [ "${pkgs.libxml2-old.dev}" "${pkgs.libxslt-old.dev}" ]) (pkgs.lib.toList attrs.configureFlags);
             });
-            php = (replaceLibxml pkgs.php).withExtensions ({ enabled, all }: with all; builtins.map replaceLibxml (enabled ++ [
-              tidy
-            ]));
+            php =
+              (pkgs.php.override { libxml2 = pkgs.libxml2-old; })
+                .withExtensions ({ enabled, all }: with all;
+                  builtins.map replaceLibxml (enabled ++ [
+                    tidy
+                  ])
+                );
           in
             pkgs.mkShell {
               nativeBuildInputs = [
