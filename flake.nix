@@ -7,7 +7,11 @@
       flake = false;
     };
 
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs = {
+      # revision containing libxml2 2.9.8
+      url = "github:NixOS/nixpkgs/75ca6faece8f06096fb45d0b341c39a7ad47c256";
+      flake = false;
+    };
 
     utils.url = "github:numtide/flake-utils";
   };
@@ -17,44 +21,19 @@
       let
         pkgs = import nixpkgs.outPath {
           inherit system;
-          overlays = [
-            (final: prev: {
-              libxml2-old = prev.libxml2.overrideAttrs (attrs: rec {
-                pname = "libxml2";
-                version = "2.9.4";
-
-                src = prev.fetchurl {
-                  url = "http://xmlsoft.org/sources/${pname}-${version}.tar.gz";
-                  sha256 = "/7kRGR5Qm5Zt61XecFOH8UFW4aVrIYJDV83wBTIzYzw=";
-                };
-              });
-              libxslt-old = prev.libxslt.override { libxml2 = final.libxml2-old; };
-            })
-          ];
+          config = {
+            php.tidy = true;
+          };
         };
       in {
         devShell =
           let
-            replaceLibxml = ext: ext.overrideAttrs (attrs: {
-              buildInputs = builtins.map (i:
-                if i == pkgs.libxml2 then pkgs.libxml2-old
-                else if i == pkgs.libxml2.dev then pkgs.libxml2-old.dev
-                else if i == pkgs.libxslt then pkgs.libxslt-old
-                else i) attrs.buildInputs;
-              configureFlags = builtins.map (builtins.replaceStrings [ "${pkgs.libxml2.dev}" "${pkgs.libxslt.dev}" ] [ "${pkgs.libxml2-old.dev}" "${pkgs.libxslt-old.dev}" ]) (pkgs.lib.toList attrs.configureFlags);
-            });
-            php =
-              (pkgs.php.override { libxml2 = pkgs.libxml2-old; })
-                .withExtensions ({ enabled, all }: with all;
-                  builtins.map replaceLibxml (enabled ++ [
-                    tidy
-                  ])
-                );
+            php = pkgs.php;
           in
             pkgs.mkShell {
               nativeBuildInputs = [
                 php
-              ] ++ (with php.packages; [
+              ] ++ (with pkgs.phpPackages; [
                 composer
               ]);
             };
