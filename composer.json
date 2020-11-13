@@ -1,0 +1,17 @@
+{
+    "name": "jtojnar/graby-double-images",
+    "description": "Repro for https://github.com/fossar/selfoss/issues/1230",
+    "type": "project",
+    "require": {
+        "j0k3r/graby": "^2.2",
+        "php-http/guzzle6-adapter": "^2.0",
+        "monolog/monolog": "^2.1"
+    },
+    "license": "CC-0",
+    "authors": [
+        {
+            "name": "Jan Tojnar",
+            "email": "jtojnar@gmail.com"
+        }
+    ]
+}
